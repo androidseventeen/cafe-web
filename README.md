@@ -1,70 +1,74 @@
-# Getting Started with Create React App
+# ecom-client
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Storefront and admin UI for a single-vendor ecommerce store. Built with React (CRA), Tailwind CSS, and React Router v6.
 
-## Available Scripts
+## Stack
 
-In the project directory, you can run:
+- **Framework** — React (Create React App)
+- **Styling** — Tailwind CSS
+- **Routing** — React Router v6
+- **State** — Context API + useReducer (auth + cart)
+- **HTTP** — Axios (JWT interceptor attached)
+- **Payments** — `@stripe/stripe-js` + `@stripe/react-stripe-js`
+- **Hosting** — Render Static Site (free tier)
 
-### `npm start`
+## Prerequisites
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Node.js 18+
+- `ecom-api` running locally or deployed
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Getting started
 
-### `npm test`
+```bash
+# Install dependencies
+npm install
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Copy env file and fill in values
+cp .env.example .env
 
-### `npm run build`
+# Start dev server
+npm start
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Environment variables
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Scripts
 
-### `npm run eject`
+```bash
+npm start        # dev server on localhost:3000
+npm run build    # production build
+npm test         # run tests
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Route structure
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+| Path | Component | Auth |
+|---|---|---|
+| `/` | Catalog | Public |
+| `/products/:slug` | Product detail | Public |
+| `/cart` | Cart | Public |
+| `/checkout` | Checkout | Public (guest ok) |
+| `/orders/confirm/:id` | Order confirmation | Public |
+| `/account/orders` | Order history | Shopper |
+| `/downloads/:token` | Download landing | Public |
+| `/login` | Login | Public |
+| `/register` | Register | Public |
+| `/admin` | Admin dashboard | Admin + Owner |
+| `/admin/products` | Product list | Admin + Owner |
+| `/admin/products/new` | Create product | Admin + Owner |
+| `/admin/products/:id` | Edit product | Admin + Owner |
+| `/admin/orders` | Orders list | Admin + Owner |
+| `/admin/orders/:id` | Order detail | Admin + Owner |
+| `/admin/staff` | Staff management | Owner only |
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Notes
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- JWT stored in `httpOnly` cookie — never `localStorage`
+- Cart state persisted via `sessionToken` cookie for guests
+- Stripe card input handled by Stripe Elements — card data never touches this app
+- CRA is unmaintained upstream — consider migrating to Vite if build times become an issue during the POC
