@@ -22,6 +22,7 @@ export default function ProductCard({
   return (
     <article className="overflow-hidden rounded-md border-2 border-black bg-white">
       <div className="relative flex h-64 items-center justify-center border-b-2 border-dashed border-black/40 bg-brand-cream">
+        {/* to do: make new pulsing component to be used for save label and typebadge*/}
         {saveLabel && (
           <span className="absolute left-3 top-3 rounded border-2 border-black bg-red-500 px-2 py-1 text-xs font-medium text-white">
             {saveLabel}
