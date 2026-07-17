@@ -4,9 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-This is `ecom-client` — the storefront + admin UI for a single-vendor ecommerce store, paired with a separate `ecom-api` backend (not in this repo). It is currently a **bare Create React App scaffold**: `src/App.js` renders the string "Cafe" and most of the planned architecture is empty directories. Treat the README route table and directory structure as the *intended* design, not what exists.
+This is `ecom-client` — the storefront + admin UI for a single-vendor ecommerce store, paired with a separate `ecom-api` backend (not in this repo). It started as a bare Create React App scaffold and now has real React Router v6 routing (`src/App.js`), a shared `MainLayout`, and a handful of pages — see [Pages implemented](#pages-implemented) below for exactly what's built vs. stubbed. Most of the README's full route table (cart, checkout, auth, admin) is still unbuilt. Treat the README route table and directory structure as the *intended* design, not what fully exists yet.
 
-Empty stub directories under `src/` (`components/`, `features/`, `pages/`, `layouts/`, `services/`, `assets/`) are placeholders for the layout described in the README — populate them as work progresses rather than inventing a different structure.
+Stub directories under `src/` (`features/`) are still placeholders for the layout described in the README — populate them as work progresses rather than inventing a different structure. `components/`, `pages/`, `layouts/`, `services/`, and `assets/` are no longer empty (see below).
+
+## Pages implemented
+
+`src/App.js` wires `BrowserRouter`/`Routes`, all nested under `MainLayout` (`src/layouts/MainLayout.jsx`, renders `TopNav` + `<Outlet />`):
+
+| Path | Component | Status |
+|---|---|---|
+| `/`, `/shop` | `src/pages/ProductList.jsx` | Built out — filter/sort bar, product grid (`ProductCard`), pagination. Data is a **hardcoded local `PRODUCTS` array**, not fetched from `ecom-api` |
+| `/about` | `src/pages/About.jsx` | Stub — heading only |
+| `/blog` | `src/pages/Blog.jsx` | Stub — heading only |
+
+An axios client exists (`src/services/api-client.js`, `src/services/config.js`, base URL from `REACT_APP_SERVERAPI`) but no page consumes it yet. Everything else in the README's route table (`/products/:slug`, `/cart`, `/checkout`, `/login`, `/register`, `/account/*`, `/admin/*`) has no route or page yet.
 
 ## Tailwind is installed but not wired up
 
