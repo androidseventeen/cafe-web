@@ -64,6 +64,7 @@ export default function ProductList() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 py-10 md:grid-cols-2 lg:grid-cols-3">
+        {/* TODO: consider what to render for the case of nof products */}
         {PRODUCTS.map((p, i) => (
           <ProductCard
             key={p.id}
