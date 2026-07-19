@@ -10,16 +10,20 @@ Stub directories under `src/` (`features/`) are still placeholders for the layou
 
 ## Pages implemented
 
-`src/App.js` wires `BrowserRouter`/`Routes`, all nested under `MainLayout` (`src/layouts/MainLayout.jsx`, renders `TopNav` + `<Outlet />`):
+`src/App.js` wires `BrowserRouter`/`Routes` into three layout-route groups — storefront pages under `MainLayout` (`src/layouts/MainLayout.jsx`, renders `TopNav` + `<Outlet />`), `/login` under `AuthLayout`, and `/admin/*` under `RequireRole` + `AdminLayout`:
 
 | Path | Component | Status |
 |---|---|---|
 | `/`, `/shop` | `src/pages/ProductList.jsx` | Built out — filter/sort bar, product grid (`ProductCard`), pagination. Data is a **hardcoded local `PRODUCTS` array**, not fetched from `ecom-api` |
 | `/about` | `src/pages/About.jsx` | Stub — heading only |
 | `/blog` | `src/pages/Blog.jsx` | Stub — heading only |
-| `/login` | `src/pages/Login.jsx` | Built out — email/password form under `AuthLayout` (minimal header, no nav/cart), wired to `cafe-api`'s `/users/login` via `AuthContext`. Same form for all roles; post-login redirect goes through `src/lib/redirect.js`'s `getPostLoginRedirect(role)`, which currently sends every role to `/` (no `/admin` area exists yet) |
+| `/login` | `src/pages/Login.jsx` | Built out — email/password form under `AuthLayout` (minimal header, no nav/cart), wired to `cafe-api`'s `/users/login` via `AuthContext`. Same form for all roles; post-login redirect goes through `src/lib/redirect.js`'s `getPostLoginRedirect(role)` — `admin`/`owner` → `/admin`, `shopper` → `/` |
+| `/admin` | `src/pages/admin/Dashboard.jsx` | Built out — stat cards + recent-orders table under `AdminLayout` (sidebar nav + header with Log out). Data is **hardcoded placeholder** (`STATS`/`RECENT_ORDERS` consts) — `cafe-api` has no orders/revenue/order-item endpoints yet (those modules are empty stubs), so there's nothing to fetch |
+| `/admin/products`, `/admin/orders`, `/admin/staff` | `src/pages/admin/{Products,Orders,Staff}.jsx` | Stubs — heading only, same precedent as `About.jsx`/`Blog.jsx`. Exist so the `AdminLayout` sidebar nav isn't dead links; real CRUD is separate, later work |
 
-An axios client exists (`src/services/api-client.js`, `src/services/config.js`, base URL from `REACT_APP_SERVERAPI`) — `ProductList` still doesn't consume it, but `cafeApi.login`/`me`/`logout`/`createUser` do. Everything else in the README's route table (`/products/:slug`, `/cart`, `/checkout`, `/register`, `/account/*`, `/admin/*`) has no route or page yet.
+All four `/admin/*` routes are wrapped in `src/components/RequireRole.jsx` (the first route-guard in this codebase), used as a layout-route element the same way `MainLayout`/`AuthLayout` are: renders nothing while `AuthContext.status === 'loading'` (avoids a flash-redirect before the mount-time `/me` call resolves), redirects anonymous users to `/login`, and redirects authenticated-but-wrong-role users to `/`. Currently `allow={['admin', 'owner']}` for all four routes — **`/admin/staff`'s owner-only restriction is nav-visibility-only right now** (the `AdminLayout` sidebar hides the Staff link from `admin`-role users), not route-level; an `admin` who navigates to `/admin/staff` directly is not blocked by `RequireRole`. Tighten this once Staff CRUD is actually built.
+
+An axios client exists (`src/services/api-client.js`, `src/services/config.js`, base URL from `REACT_APP_SERVERAPI`) — `ProductList` still doesn't consume it, but `cafeApi.login`/`me`/`logout`/`createUser` do. Everything else in the README's route table (`/products/:slug`, `/cart`, `/checkout`, `/register`, `/account/*`) has no route or page yet.
 
 ## Tailwind is wired up
 
@@ -45,6 +49,7 @@ Requires an `.env` (not committed) — see README for keys. `REACT_APP_API_URL` 
 
 - `src/context/AuthContext.jsx` — Context API + `useReducer` holding `{ user, status }` (`'loading' | 'authenticated' | 'anonymous'`), as planned in the README. Provides `login(email, password)` and `logout()`; on mount it calls `GET /users/me` to restore the session from the cookie (a 401 there just means logged-out, not an error).
 - `src/layouts/AuthLayout.jsx` — minimal-chrome layout (brand mark only, no nav links/cart) for auth routes, parallel to `MainLayout`; currently used by `/login`, intended for `/register` and forgot-password later.
+- `src/layouts/AdminLayout.jsx` — third layout sibling to `MainLayout`/`AuthLayout`: header (brand + "Admin" label + Log out) + role-aware sidebar nav (Dashboard/Products/Orders, Staff only for `owner`). Used by all `/admin/*` routes, guarded by `RequireRole` — see the Pages table above.
 - The JWT lives in an **httpOnly cookie** set by `cafe-api` — **never `localStorage`**. `src/services/config.js`'s axios instance already has `withCredentials: true` so the cookie flows automatically; no token is read or stored in JS.
 
 ## Planned architecture (from README — not yet built)
@@ -52,7 +57,6 @@ Requires an `.env` (not committed) — see README for keys. `REACT_APP_API_URL` 
 - **State**: Context API + `useReducer` for cart (no Redux) — same pattern as auth above
 - **Guest cart**: persisted server-side via a `sessionToken` cookie
 - **Payments**: Stripe Elements — card data must never touch this app's state or be sent to `ecom-api`
-- **Routing**: React Router v6; admin routes gated by role (Admin/Owner, with `/admin/staff` restricted to Owner)
 - **Hosting**: Render Static Site (free tier)
 
 The README notes CRA is unmaintained upstream — migration to Vite is on the table if build times become a problem, but is not planned yet.
