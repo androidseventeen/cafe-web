@@ -1,10 +1,11 @@
-function TypeBadge({ type }) {
-  const styles =
-    type === 'Digital'
-      ? 'border-purple-500 text-purple-500'
-      : 'border-brand-sky text-brand-sky';
+export function TypeBadge({ type }) {
+  const isDigital = type?.toLowerCase() === 'digital';
+  const styles = isDigital
+    ? 'border-purple-500 text-purple-500'
+    : 'border-brand-sky text-brand-sky';
+  const label = type.charAt(0).toUpperCase() + type.slice(1);
   return (
-    <span className={`rounded border px-2 py-1 text-xs ${styles}`}>{type}</span>
+    <span className={`rounded border px-2 py-1 text-xs ${styles}`}>{label}</span>
   );
 }
 
@@ -37,21 +38,27 @@ export default function ProductCard({
           <p className="text-sm italic text-neutral-500">{subtext}</p>
         )}
 
-        <div className="flex items-end justify-between pt-2">
-          <div className="flex items-baseline gap-2">
-            <span
-              className={`text-lg font-bold ${isOnSale ? 'text-red-600' : ''}`}
-            >
-              ${price}
-            </span>
-            {originalPrice && (
-              <span className="text-sm text-neutral-400 line-through">
-                ${originalPrice}
-              </span>
+        {(price || type) && (
+          <div className="flex items-end justify-between pt-2">
+            {price ? (
+              <div className="flex items-baseline gap-2">
+                <span
+                  className={`text-lg font-bold ${isOnSale ? 'text-red-600' : ''}`}
+                >
+                  ${price}
+                </span>
+                {originalPrice && (
+                  <span className="text-sm text-neutral-400 line-through">
+                    ${originalPrice}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span />
             )}
+            {type && <TypeBadge type={type} />}
           </div>
-          {type && <TypeBadge type={type} />}
-        </div>
+        )}
       </div>
     </article>
   );

@@ -38,4 +38,32 @@ export const cafeApi =  {
 
         return response;
     },
+
+    listAllProducts : async function () {
+        const response = await api.request({
+            url: '/products/all',
+            method: "GET"
+        })
+
+        return response;
+    },
+
+    listProducts : async function (params = {}) {
+        const response = await api.request({
+            url: '/products',
+            method: "GET",
+            params
+        })
+
+        return response;
+    },
+
+    getProduct : async function (id) {
+        const response = await api.request({
+            url: `/products/${id}`,
+            method: "GET"
+        })
+
+        return response;
+    },
 }

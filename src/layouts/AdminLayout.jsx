@@ -23,7 +23,7 @@ export default function AdminLayout() {
       <header className="flex items-center justify-between border-b border-black bg-white px-8 py-6">
         <div className="flex items-baseline gap-2">
           <span className="text-xl font-bold tracking-[0.2em]">STORE.CO</span>
-          <span className="text-sm text-neutral-500">Admin</span>
+          <span className="text-sm text-neutral-500">{user.email}</span>
         </div>
         <Button
           onClick={handleLogout}
@@ -51,9 +51,9 @@ export default function AdminLayout() {
             {user.role === 'owner' && (
               <NavLink to="/admin/staff" className={navLinkClass}>
                 Staff
-                <span className="ml-auto rounded border border-brand-blue px-2 py-0.5 text-xs text-brand-blue">
+                {/* <span className="ml-auto rounded border border-brand-blue px-2 py-0.5 text-xs text-brand-blue">
                   Owner
-                </span>
+                </span> */}
               </NavLink>
             )}
           </nav>

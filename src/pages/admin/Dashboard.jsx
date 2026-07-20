@@ -1,19 +1,70 @@
 // TODO: backend has no orders/revenue/product-count aggregation endpoints yet
 // (orders, order-items, payments, cart modules are empty stubs in cafe-api).
-// Replace with real data once those endpoints exist.
-const STATS = [
-  { label: 'TOTAL ORDERS', value: '1,284', detail: '↑ 12% this month', variant: 'default' },
-  { label: 'REVENUE', value: '$48,320', detail: '↑ 8% this month', variant: 'default' },
-  { label: 'PRODUCTS', value: '42', detail: '18 physical · 24 digital', variant: 'default' },
-  { label: 'PENDING ORDERS', value: '17', detail: 'Needs attention', variant: 'warning' },
-];
+// Replace with real data once those endpoints exist. To preview the zero-data
+// state locally, temporarily set these fields to 0 and RECENT_ORDERS to [].
+const STATS_DATA = {
+  totalOrders: 1284,
+  revenue: 48320,
+  productsTotal: 42,
+  productsPhysical: 18,
+  productsDigital: 24,
+  pendingOrders: 17,
+};
+const STATS_DATA2 = {
+  totalOrders: 0,
+  revenue: 0,
+  productsTotal: 0,
+  productsPhysical: 0,
+  productsDigital: 0,
+  pendingOrders: 0,
+};
 
-const RECENT_ORDERS = [
+function formatCurrency(n) {
+  return `$${n.toLocaleString()}`;
+}
+
+function buildStats(d) {
+  return [
+    {
+      label: 'TOTAL ORDERS',
+      value: d.totalOrders.toLocaleString(),
+      detail: d.totalOrders > 0 ? '↑ 12% this month' : 'No orders yet',
+      variant: 'default',
+    },
+    {
+      label: 'REVENUE',
+      value: formatCurrency(d.revenue),
+      detail: d.revenue > 0 ? '↑ 8% this month' : 'No revenue yet',
+      variant: 'default',
+    },
+    {
+      label: 'PRODUCTS',
+      value: String(d.productsTotal),
+      detail:
+        d.productsTotal > 0
+          ? `${d.productsPhysical} physical · ${d.productsDigital} digital`
+          : 'No products yet',
+      variant: 'default',
+    },
+    {
+      label: 'PENDING ORDERS',
+      value: String(d.pendingOrders),
+      detail: d.pendingOrders > 0 ? 'Needs attention' : 'All caught up',
+      variant: d.pendingOrders > 0 ? 'warning' : 'default',
+    },
+  ];
+}
+
+const STATS = buildStats(STATS_DATA2);
+
+const RECENT_ORDERS2 = [
   { id: '#10048', customer: 'Jane Smith', total: '$87.14', status: 'Fulfilled', date: 'Jul 7, 2026' },
   { id: '#10047', customer: 'Guest', total: '$29.99', status: 'Pending', date: 'Jul 7, 2026' },
   { id: '#10046', customer: 'Carlos Ruiz', total: '$149.00', status: 'Processing', date: 'Jul 6, 2026' },
   { id: '#10045', customer: 'Aiko Tanaka', total: '$59.99', status: 'Fulfilled', date: 'Jul 6, 2026' },
   { id: '#10044', customer: 'Marc Dupont', total: '$19.99', status: 'Cancelled', date: 'Jul 5, 2026' },
+];
+const RECENT_ORDERS = [
 ];
 
 const STATUS_STYLES = {
@@ -77,17 +128,25 @@ export default function Dashboard() {
             </tr>
           </thead>
           <tbody>
-            {RECENT_ORDERS.map((o) => (
-              <tr key={o.id} className="border-b border-dashed border-black/20 last:border-b-0">
-                <td className="px-6 py-4 text-brand-blue">{o.id}</td>
-                <td className="px-6 py-4">{o.customer}</td>
-                <td className="px-6 py-4">{o.total}</td>
-                <td className="px-6 py-4">
-                  <StatusBadge status={o.status} />
+            {RECENT_ORDERS.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-10 text-center text-sm text-neutral-500">
+                  No orders yet
                 </td>
-                <td className="px-6 py-4 text-neutral-500">{o.date}</td>
               </tr>
-            ))}
+            ) : (
+              RECENT_ORDERS.map((o) => (
+                <tr key={o.id} className="border-b border-dashed border-black/20 last:border-b-0">
+                  <td className="px-6 py-4 text-brand-blue">{o.id}</td>
+                  <td className="px-6 py-4">{o.customer}</td>
+                  <td className="px-6 py-4">{o.total}</td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={o.status} />
+                  </td>
+                  <td className="px-6 py-4 text-neutral-500">{o.date}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
