@@ -28,6 +28,56 @@ const labelClass = 'mb-2 block text-sm text-neutral-600';
 const inputClass =
   'w-full rounded-md border-2 border-black bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue';
 
+// One row per option group: "Name: v1, v2" on the left with a small input to add
+// the next value, and a ➕ on the right. Holds its own draft so each group's
+// input is independent. Maps to optionValueSchema ({ label }) on add.
+function OptionGroupRow({ group, onAddValue }) {
+  const [optionDraft, setOptionDraft] = useState('');
+
+  const add = () => {
+    if (!optionDraft.trim()) return;
+    onAddValue(optionDraft);
+    setOptionDraft('');
+  };
+
+  const valuesText = group.values.map((v) => v.label).join(', ');
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="flex items-center gap-2">
+        <span className="text-xs text-neutral-700">
+          {group.name}
+          {valuesText && `: ${valuesText}`}
+        </span>
+        
+      </span>
+      <span>
+        <input
+          value={optionDraft}
+          onChange={(e) => setOptionDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault(); // don't submit the whole product form
+              add();
+            }
+          }}
+          placeholder="option"
+          className="w-[120px] rounded border-2 border-black mx-3 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+        />
+        <Button
+          type="button"
+          onClick={add}
+          disabled={!optionDraft.trim()}
+          title="Add option"
+          className="rounded-[1rem] border border-black bg-white px-3 py-2 text-sm disabled:opacity-50"
+        >
+          ➕
+        </Button>
+      </span>
+    </div>
+  );
+}
+
 // Presentational product form — knows nothing about the API. Owns its field
 // state (seeded from `initialValues`), validates client-side, and calls
 // `onSubmit(values)` only when valid. The container supplies `onSubmit`,
@@ -48,6 +98,13 @@ export default function ProductForm({
     initialValues?.priceDefault != null ? String(initialValues.priceDefault) : ''
   );
   const [description, setDescription] = useState(initialValues?.description ?? '');
+  // Draft name for a new variant group; committed to `optionGroups` on "Add
+  // group name". `optionGroups` is seeded from initialValues so editing a
+  // product preserves (and can extend) its existing groups.
+  const [variantGroup, setVariantGroup] = useState('');
+  const [optionGroups, setOptionGroups] = useState(
+    () => initialValues?.optionGroups ?? []
+  );
   const [validationError, setValidationError] = useState('');
 
   const handleSubmit = (e) => {
@@ -69,7 +126,28 @@ export default function ProductForm({
       status,
       priceDefault: price,
       description: description.trim(),
+      optionGroups,
     });
+  };
+
+  // Commit the draft group name as a new, empty option group (maps to
+  // optionGroupSchema { name, values }).
+  const handleAddGroup = () => {
+    const groupName = variantGroup.trim();
+    if (!groupName) return;
+    setOptionGroups((groups) => [...groups, { name: groupName, values: [] }]);
+    setVariantGroup('');
+  };
+
+  // Append a value (label) to the group at `groupIndex`.
+  const handleAddValue = (groupIndex, label) => {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    setOptionGroups((groups) =>
+      groups.map((g, i) =>
+        i === groupIndex ? { ...g, values: [...g.values, { label: trimmed }] } : g
+      )
+    );
   };
 
   // A fresh validation error takes precedence; otherwise show the API error.
@@ -110,7 +188,6 @@ export default function ProductForm({
         </div>
       </div>
 
-      {/* Price and the SKUs/variants action share one row, per the design. */}
       <div className="grid grid-cols-2 gap-6">
         <div>
           <label htmlFor="pf-price" className={labelClass}>
@@ -138,6 +215,53 @@ export default function ProductForm({
           </Button>
         </div>
       </div>
+
+      {/* Variant Option Groups — step 1: name-a-group row only (inert button,
+          not submitted). Rendering/editing existing groups comes later. */}
+      <div className="grid grid-cols-2 gap-6">
+        <div>
+          <label htmlFor="pf-variant-group" className={labelClass}>
+            Variant group
+          </label>
+          <input
+            id="pf-variant-group"
+            value={variantGroup}
+            onChange={(e) => setVariantGroup(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault(); // don't submit the whole product form
+                handleAddGroup();
+              }
+            }}
+            placeholder="e.g. Size"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <span className={labelClass}>&nbsp;</span>
+          <Button
+            type="button"
+            onClick={handleAddGroup}
+            disabled={!variantGroup.trim()}
+            className="w-full rounded-md border-2 border-black bg-white px-4 py-3 text-sm disabled:opacity-50"
+          >
+            + Add group name
+          </Button>
+        </div>
+      </div>
+
+      {/* Option-value rows — one per group; add values with the ➕ button. */}
+      {optionGroups.length > 0 && (
+        <div className="space-y-2">
+          {optionGroups.map((group, i) => (
+            <OptionGroupRow
+              key={i}
+              group={group}
+              onAddValue={(label) => handleAddValue(i, label)}
+            />
+          ))}
+        </div>
+      )}
 
       <div>
         <label htmlFor="pf-desc" className={labelClass}>

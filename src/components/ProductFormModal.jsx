@@ -8,7 +8,14 @@ import { cafeApi } from '../services/api-client';
 // note in the plan).
 function deriveInitialValues(product) {
   if (!product) {
-    return { name: '', type: 'physical', status: 'active', priceDefault: '', description: '' };
+    return {
+      name: '',
+      type: 'physical',
+      status: 'active',
+      priceDefault: '',
+      description: '',
+      optionGroups: [],
+    };
   }
   return {
     name: product.name ?? '',
@@ -18,6 +25,8 @@ function deriveInitialValues(product) {
     status: product.status ?? 'active',
     priceDefault: product.priceDefault,
     description: product.description ?? '',
+    // Seed existing groups so an edit extends rather than wipes them.
+    optionGroups: product.optionGroups ?? [],
   };
 }
 
