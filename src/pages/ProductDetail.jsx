@@ -3,10 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Button from '../components/Button';
 import { TypeBadge } from '../components/ProductCard';
 import { cafeApi } from '../services/api-client';
-
-function formatPrice(cents) {
-  return (cents / 100).toFixed(2);
-}
+import { formatPriceUSD } from '../lib/price';
 
 // No pricing/variant backend beyond raw SKUs yet: show the lowest SKU price,
 // "From $X" only when SKUs genuinely differ, and a friendly note when a
@@ -16,7 +13,7 @@ function priceDisplay(skus) {
   const prices = skus.map((s) => s.price);
   const lowest = Math.min(...prices);
   const allSame = prices.every((p) => p === lowest);
-  return allSame ? `$${formatPrice(lowest)}` : `From $${formatPrice(lowest)}`;
+  return allSame ? formatPriceUSD(lowest) : `From ${formatPriceUSD(lowest)}`;
 }
 
 export default function ProductDetail() {
