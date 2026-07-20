@@ -77,6 +77,16 @@ export const cafeApi =  {
         return response;
     },
 
+    updateProduct : async function (id, body) {
+        const response = await api.request({
+            url: `/products/${id}`,
+            method: "PATCH",
+            data: body
+        })
+
+        return response;
+    },
+
     // SKU creation lives under the product route; body is always { skus: [...] }.
     createSkus : async function (productId, skus) {
         const response = await api.request({

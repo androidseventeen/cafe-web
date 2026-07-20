@@ -2,20 +2,15 @@ import { TypeBadge } from './ProductCard';
 import Button from './Button';
 import { formatPriceUSD } from '../lib/price';
 
-// Derive a display price + stock summary from a product's embedded SKUs
-// (GET /products/all embeds them). No SKUs → no price and zero stock.
-function summarize(product) {
-  const skus = product.skus || [];
-  if (skus.length === 0) return { price: null, varies: false, stock: 0 };
-  const prices = skus.map((s) => s.price);
-  const lowest = Math.min(...prices);
-  const varies = !prices.every((p) => p === lowest);
-  const stock = skus.reduce((sum, s) => sum + (s.stock || 0), 0);
-  return { price: lowest, varies, stock };
+// Stock lives on the SKUs (GET /products/all embeds them); price is the
+// product's own priceDefault.
+function stockFromSkus(product) {
+  return (product.skus || []).reduce((sum, s) => sum + (s.stock || 0), 0);
 }
 
-export default function AdminProductCard({ product }) {
-  const { price, varies, stock } = summarize(product);
+export default function AdminProductCard({ product, onEdit }) {
+  const price = product.priceDefault;
+  const stock = stockFromSkus(product);
   const isDigital = product.type === 'digital';
   const nonActive = product.status !== 'active';
   const outOfStock = !isDigital && stock === 0;
@@ -53,9 +48,7 @@ export default function AdminProductCard({ product }) {
 
           <div className="flex items-center gap-3 pt-1">
             {price != null ? (
-              <span className="text-lg font-bold">
-                {varies ? `From ${formatPriceUSD(price)}` : formatPriceUSD(price)}
-              </span>
+              <span className="text-lg font-bold">{formatPriceUSD(price)}</span>
             ) : (
               <span className="text-sm text-neutral-400">No price</span>
             )}
@@ -70,7 +63,7 @@ export default function AdminProductCard({ product }) {
         </span>
         <div className="flex gap-2">
           <Button
-            title="Coming soon"
+            onClick={() => onEdit?.(product)}
             className="rounded border-2 border-black px-4 py-1.5 text-sm"
           >
             Edit

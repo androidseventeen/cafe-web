@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { cafeApi } from '../../services/api-client';
 import AdminProductCard from '../../components/AdminProductCard';
-import AddProductModal from '../../components/AddProductModal';
+import ProductFormModal from '../../components/ProductFormModal';
 import Button from '../../components/Button';
 
 const FETCH_ERROR = 'Something went wrong. Please try again.';
@@ -10,7 +10,8 @@ export default function Products() {
   const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'error'
   const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
-  const [showAdd, setShowAdd] = useState(false);
+  // null = closed | { product: null } = add | { product } = edit
+  const [formState, setFormState] = useState(null);
 
   // Reused after a successful create to refresh the grid.
   const fetchProducts = async () => {
@@ -44,8 +45,8 @@ export default function Products() {
     };
   }, []);
 
-  const handleCreated = () => {
-    setShowAdd(false);
+  const handleSaved = () => {
+    setFormState(null);
     fetchProducts();
   };
 
@@ -61,7 +62,7 @@ export default function Products() {
       {/* Toolbar — search + filters are decorative for now (no functionality). */}
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
         <Button
-          onClick={() => setShowAdd(true)}
+          onClick={() => setFormState({ product: null })}
           className="rounded-md bg-black px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white"
         >
           + Add product
@@ -105,15 +106,20 @@ export default function Products() {
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {products.map((p) => (
-              <AdminProductCard key={p._id} product={p} />
+              <AdminProductCard
+                key={p._id}
+                product={p}
+                onEdit={(product) => setFormState({ product })}
+              />
             ))}
           </div>
         ))}
 
-      {showAdd && (
-        <AddProductModal
-          onClose={() => setShowAdd(false)}
-          onCreated={handleCreated}
+      {formState && (
+        <ProductFormModal
+          product={formState.product}
+          onClose={() => setFormState(null)}
+          onSaved={handleSaved}
         />
       )}
     </div>
