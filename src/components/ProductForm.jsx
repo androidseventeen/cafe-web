@@ -24,9 +24,89 @@ function Segmented({ options, value, onChange }) {
   );
 }
 
+//poc for generating sku labels
+function generateVariants(optionGroups) {
+  return optionGroups.reduce(
+    (variants, group) =>
+      variants.flatMap(variant =>
+        group.values.map(value =>
+          variant ? `${variant}-${value.label}` : value.label
+        )
+      ),
+    [""]
+  );
+}
+
 const labelClass = 'mb-2 block text-sm text-neutral-600';
 const inputClass =
   'w-full rounded-md border-2 border-black bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue';
+const skuInputClass =
+  'w-full rounded border-2 border-black bg-white px-1 py-2 text-xs text-center focus:outline-none focus:ring-2 focus:ring-brand-blue';
+
+// One row per generated variant label (see generateVariants). `rows` is keyed
+// by variant label so edits survive a re-render even as option groups change;
+// `onChange` maps a field edit back up to that key. No delete-row affordance
+// and no zero-stock highlight per the wireframe — keeping this simple until
+// sku-uniqueness validation lands.
+function SkuManageTable({ variants, rows, onChange }) {
+  return (
+    <div className="overflow-hidden rounded-md border-2 border-black">
+      <table className="w-full table-fixed text-sm">
+        <colgroup>
+          <col className="w-[40%]" />
+          <col className="w-[30%]" />
+          <col className="w-[15%]" />
+          <col className="w-[15%]" />
+        </colgroup>
+        <thead className="bg-brand-cream/60 text-left">
+          <tr>
+            <th className="px-4 py-3 font-semibold">Variant</th>
+            <th className="px-4 py-3 text-center font-semibold">SKU</th>
+            <th className="px-4 py-3 text-center font-semibold">Stock</th>
+            <th className="px-4 py-3 text-center font-semibold">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {variants.map((label) => {
+            const row = rows[label] ?? { sku: '', stock: '', price: '' };
+            return (
+              <tr key={label} className="border-t border-dashed border-black/30">
+                <td className="px-4 py-3 italic text-neutral-700">{label}</td>
+                <td className="px-4 py-3">
+                  <input
+                    value={row.sku}
+                    onChange={(e) => onChange(label, 'sku', e.target.value)}
+                    placeholder="SKU code"
+                    className={skuInputClass}
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="number"
+                    min="0"
+                    value={row.stock}
+                    onChange={(e) => onChange(label, 'stock', e.target.value)}
+                    className={`${skuInputClass} text-center`}
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={row.price}
+                    onChange={(e) => onChange(label, 'price', e.target.value)}
+                    className={`${skuInputClass} text-center`}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 // One row per option group: "Name: v1, v2" on the left with a small input to add
 // the next value, and a ➕ on the right. Holds its own draft so each group's
@@ -105,7 +185,21 @@ export default function ProductForm({
   const [optionGroups, setOptionGroups] = useState(
     () => initialValues?.optionGroups ?? []
   );
+  // Generated once per render from optionGroups — every group needs at least
+  // one value or the whole set collapses to [] (see generateVariants), which
+  // is also what gates the "Manage SKUs" button.
+  const variants = optionGroups.length > 0 ? generateVariants(optionGroups) : [];
+  const [showSkuManager, setShowSkuManager] = useState(false);
+  // Keyed by variant label so edits survive re-renders as option groups change.
+  const [skuRows, setSkuRows] = useState({});
   const [validationError, setValidationError] = useState('');
+
+  const handleSkuRowChange = (label, field, value) => {
+    setSkuRows((rows) => ({
+      ...rows,
+      [label]: { sku: '', stock: '', price: '', ...rows[label], [field]: value },
+    }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -177,6 +271,20 @@ export default function ProductForm({
         />
       </div>
 
+      <div>
+        <label htmlFor="pf-desc" className={labelClass}>
+          Description
+        </label>
+        <textarea
+          id="pf-desc"
+          rows={4}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Product description…"
+          className={`${inputClass} resize-y`}
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-6">
         <div>
           <span className={labelClass}>Type</span>
@@ -208,8 +316,10 @@ export default function ProductForm({
           <span className={labelClass}>SKUs / variants</span>
           <Button
             type="button"
-            title="Coming soon"
-            className="w-full rounded-md border-2 border-black bg-white px-4 py-3 text-sm"
+            onClick={() => setShowSkuManager((v) => !v)}
+            disabled={variants.length === 0}
+            title={variants.length === 0 ? 'Add a variant group and values first' : undefined}
+            className="w-full rounded-md border-2 border-black bg-white px-4 py-3 text-sm disabled:opacity-50"
           >
             + Manage SKUs
           </Button>
@@ -263,19 +373,9 @@ export default function ProductForm({
         </div>
       )}
 
-      <div>
-        <label htmlFor="pf-desc" className={labelClass}>
-          Description
-        </label>
-        <textarea
-          id="pf-desc"
-          rows={4}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Product description…"
-          className={`${inputClass} resize-y`}
-        />
-      </div>
+      {showSkuManager && variants.length > 0 && (
+        <SkuManageTable variants={variants} rows={skuRows} onChange={handleSkuRowChange} />
+      )}
 
       <div>
         <span className={labelClass}>Images</span>
