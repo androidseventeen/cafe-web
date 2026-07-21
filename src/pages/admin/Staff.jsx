@@ -129,9 +129,10 @@ export default function Staff() {
         )}
 
       </div>
-        <div className="mt-8 flex h-32 items-center justify-center rounded border-2 border-dashed border-black/20 bg-white text-sm text-neutral-500">
-          Stats coming soon
-        </div>
+      
+      <div className="mt-8 flex h-32 items-center justify-center rounded border-2 border-dashed border-black/20 bg-white text-sm text-neutral-500">
+        Stats coming soon
+      </div>
     </div>
   );
 }
