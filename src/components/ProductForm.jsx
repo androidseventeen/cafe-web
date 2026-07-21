@@ -191,7 +191,21 @@ export default function ProductForm({
   const variants = optionGroups.length > 0 ? generateVariants(optionGroups) : [];
   const [showSkuManager, setShowSkuManager] = useState(false);
   // Keyed by variant label so edits survive re-renders as option groups change.
-  const [skuRows, setSkuRows] = useState({});
+  // Seeded from any existing SKUs (editing a product) so their `id` carries
+  // through every edit — that's what tells submit to update instead of create.
+  const [skuRows, setSkuRows] = useState(() => {
+    const rows = {};
+    for (const sku of initialValues?.skus ?? []) {
+      if (!sku.variantLabel) continue;
+      rows[sku.variantLabel] = {
+        id: sku._id,
+        sku: sku.sku ?? '',
+        stock: sku.stock != null ? String(sku.stock) : '',
+        price: sku.price != null ? String(sku.price) : '',
+      };
+    }
+    return rows;
+  });
   const [validationError, setValidationError] = useState('');
 
   const handleSkuRowChange = (label, field, value) => {
@@ -219,23 +233,29 @@ export default function ProductForm({
     // without any SKU entry don't force incomplete rows into the payload.
     // Blank/duplicate `sku` codes are sent through as-is — the backend's
     // required/unique-index validation is the safety net until sku-uniqueness
-    // validation lands as its own task.
+    // validation lands as its own task. Rows carrying an `id` (matched to an
+    // existing SKU by variant label) go to the update batch; the rest create.
     const skusPayload =
       showSkuManager && variants.length > 0
-        ? variants.map((label) => {
-            const row = skuRows[label] ?? {};
-            const rowPrice =
-              row.price !== undefined && row.price !== '' ? Number(row.price) : price;
-            const rowStock =
-              row.stock !== undefined && row.stock !== '' ? Number(row.stock) : 0;
-            return {
-              variantLabel: label,
-              sku: (row.sku ?? '').trim(),
-              price: rowPrice,
-              stock: rowStock,
-            };
-          })
-        : [];
+        ? variants.reduce(
+            (acc, label) => {
+              const row = skuRows[label] ?? {};
+              const rowPrice =
+                row.price !== undefined && row.price !== '' ? Number(row.price) : price;
+              const rowStock =
+                row.stock !== undefined && row.stock !== '' ? Number(row.stock) : 0;
+              const entry = {
+                variantLabel: label,
+                sku: (row.sku ?? '').trim(),
+                price: rowPrice,
+                stock: rowStock,
+              };
+              (row.id ? acc.update : acc.create).push(row.id ? { id: row.id, ...entry } : entry);
+              return acc;
+            },
+            { create: [], update: [] }
+          )
+        : { create: [], update: [] };
 
     onSubmit({
       name: name.trim(),

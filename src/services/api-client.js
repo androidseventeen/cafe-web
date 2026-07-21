@@ -39,6 +39,25 @@ export const cafeApi =  {
         return response;
     },
 
+    listUsers : async function () {
+        const response = await api.request({
+            url: '/users',
+            method: "GET"
+        })
+
+        return response;
+    },
+
+    updateUserRole : async function (id, role) {
+        const response = await api.request({
+            url: `/users/${id}/role`,
+            method: "PATCH",
+            data: { role }
+        })
+
+        return response;
+    },
+
     listAllProducts : async function () {
         const response = await api.request({
             url: '/products/all',
@@ -92,6 +111,17 @@ export const cafeApi =  {
         const response = await api.request({
             url: `/products/${productId}/skus`,
             method: "POST",
+            data: { skus }
+        })
+
+        return response;
+    },
+
+    // Batch update; body is always { skus: [ { id, ...fields } ] }.
+    updateSkus : async function (skus) {
+        const response = await api.request({
+            url: '/skus',
+            method: "PATCH",
             data: { skus }
         })
 

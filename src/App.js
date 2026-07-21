@@ -34,7 +34,9 @@ function App() {
               <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/products" element={<AdminProducts />} />
               <Route path="/admin/orders" element={<AdminOrders />} />
-              <Route path="/admin/staff" element={<AdminStaff />} />
+              <Route element={<RequireRole allow={['owner']} />}>
+                <Route path="/admin/staff" element={<AdminStaff />} />
+              </Route>
             </Route>
           </Route>
         </Routes>

@@ -15,6 +15,7 @@ function deriveInitialValues(product) {
       priceDefault: '',
       description: '',
       optionGroups: [],
+      skus: [],
     };
   }
   return {
@@ -27,6 +28,8 @@ function deriveInitialValues(product) {
     description: product.description ?? '',
     // Seed existing groups so an edit extends rather than wipes them.
     optionGroups: product.optionGroups ?? [],
+    // Seed existing SKUs so "Manage SKUs" prefills instead of starting blank.
+    skus: product.skus ?? [],
   };
 }
 
@@ -56,8 +59,11 @@ export default function ProductFormModal({ product, onClose, onSaved }) { consol
         current = data.data.product;
         setSavedProduct(current);
       }
-      if (skus?.length) {
-        await cafeApi.createSkus(current._id, skus);
+      if (skus?.create?.length) {
+        await cafeApi.createSkus(current._id, skus.create);
+      }
+      if (skus?.update?.length) {
+        await cafeApi.updateSkus(skus.update);
       }
       onSaved();
     } catch (err) {

@@ -97,8 +97,6 @@ export default function ProductDetail() {
         </div>
 
         <div className="space-y-4">
-          <TypeBadge type={product.type} />
-
           <h1 className="text-3xl font-bold">{product.name}</h1>
 
           {price ? (
@@ -153,6 +151,7 @@ export default function ProductDetail() {
             <span className="font-medium">Excellent 5.0</span>{' '}
             <span className="text-neutral-500">(124 reviews)</span>
           </p>
+          <TypeBadge type={product.type} />
         </div>
       </div>
     </div>
