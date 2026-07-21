@@ -214,6 +214,29 @@ export default function ProductForm({
       return;
     }
     setValidationError('');
+
+    // Only sent when the manager was actually opened, so bare option groups
+    // without any SKU entry don't force incomplete rows into the payload.
+    // Blank/duplicate `sku` codes are sent through as-is — the backend's
+    // required/unique-index validation is the safety net until sku-uniqueness
+    // validation lands as its own task.
+    const skusPayload =
+      showSkuManager && variants.length > 0
+        ? variants.map((label) => {
+            const row = skuRows[label] ?? {};
+            const rowPrice =
+              row.price !== undefined && row.price !== '' ? Number(row.price) : price;
+            const rowStock =
+              row.stock !== undefined && row.stock !== '' ? Number(row.stock) : 0;
+            return {
+              variantLabel: label,
+              sku: (row.sku ?? '').trim(),
+              price: rowPrice,
+              stock: rowStock,
+            };
+          })
+        : [];
+
     onSubmit({
       name: name.trim(),
       type,
@@ -221,6 +244,7 @@ export default function ProductForm({
       priceDefault: price,
       description: description.trim(),
       optionGroups,
+      skus: skusPayload,
     });
   };
 
