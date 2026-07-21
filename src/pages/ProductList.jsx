@@ -104,6 +104,7 @@ export default function ProductList() {
               <ProductCard
                 name={p.name}
                 type={p.type}
+                price={p.priceDefault}
                 placeholderLabel={`Placeholder Img ${i + 1}`}
               />
             </Link>

@@ -1,29 +1,35 @@
 import { useEffect, useState } from 'react';
 import { cafeApi } from '../../services/api-client';
+import AdminProductCard from '../../components/AdminProductCard';
+import ProductFormModal from '../../components/ProductFormModal';
+import Button from '../../components/Button';
 
-const STATUS_STYLES = {
-  active: 'border-green-600 text-green-700',
-  draft: 'border-orange-500 text-orange-600',
-  archived: 'border-neutral-400 text-neutral-500',
-};
-
-function StatusBadge({ status }) {
-  return (
-    <span className={`rounded border px-2 py-1 text-xs ${STATUS_STYLES[status] || STATUS_STYLES.draft}`}>
-      {status}
-    </span>
-  );
-}
+const FETCH_ERROR = 'Something went wrong. Please try again.';
 
 export default function Products() {
   const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'error'
   const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
+  // null = closed | { product: null } = add | { product } = edit
+  const [formState, setFormState] = useState(null);
+
+  // Reused after a successful create to refresh the grid.
+  const fetchProducts = async () => {
+    setStatus('loading');
+    try {
+      const { data } = await cafeApi.listAllProducts();
+      setProducts(data.data.products);
+      setStatus('success');
+    } catch (err) {
+      setError(err?.response?.data?.error?.message || FETCH_ERROR);
+      setStatus('error');
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
-
-    cafeApi.listAllProducts()
+    cafeApi
+      .listAllProducts()
       .then(({ data }) => {
         if (cancelled) return;
         setProducts(data.data.products);
@@ -31,18 +37,54 @@ export default function Products() {
       })
       .catch((err) => {
         if (cancelled) return;
-        setError(err?.response?.data?.error?.message || 'Something went wrong. Please try again.');
+        setError(err?.response?.data?.error?.message || FETCH_ERROR);
         setStatus('error');
       });
-
     return () => {
       cancelled = true;
     };
   }, []);
 
+  const handleSaved = () => {
+    setFormState(null);
+    fetchProducts();
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-8 py-10">
-      <h1 className="text-3xl font-bold">Products</h1>
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-3xl font-bold">Products</h1>
+        <span className="text-sm italic text-neutral-500">
+          {products.length} products total
+        </span>
+      </div>
+
+      {/* Toolbar — search + filters are decorative for now (no functionality). */}
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <Button
+          onClick={() => setFormState({ product: null })}
+          className="rounded-md bg-black px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white"
+        >
+          + Add product
+        </Button>
+        <div className="relative flex-1">
+          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400">
+            ⌕
+          </span>
+          <input
+            type="search"
+            placeholder="Search products…"
+            title="Coming soon"
+            className="w-full rounded-md border-2 border-black bg-white py-3 pl-10 pr-4 text-sm"
+          />
+        </div>
+        <Button
+          title="Coming soon"
+          className="rounded-md border-2 border-black bg-white px-6 py-3 text-sm"
+        >
+          Filters
+        </Button>
+      </div>
 
       {status === 'loading' && (
         <p className="pt-8 text-sm text-neutral-500">Loading products…</p>
@@ -56,41 +98,29 @@ export default function Products() {
         </div>
       )}
 
-      {status === 'success' && (
-        <div className="mt-8 rounded border-2 border-black bg-white">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-y border-black/20 bg-brand-grey text-left">
-                <th className="px-6 py-3 font-medium">Name</th>
-                <th className="px-6 py-3 font-medium">Type</th>
-                <th className="px-6 py-3 font-medium">Status</th>
-                <th className="px-6 py-3 font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-sm text-neutral-500">
-                    No products yet
-                  </td>
-                </tr>
-              ) : (
-                products.map((p) => (
-                  <tr key={p._id} className="border-b border-dashed border-black/20 last:border-b-0">
-                    <td className="px-6 py-4 font-medium">{p.name}</td>
-                    <td className="px-6 py-4 capitalize">{p.type}</td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={p.status} />
-                    </td>
-                    <td className="px-6 py-4 text-neutral-500">
-                      {new Date(p.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {status === 'success' &&
+        (products.length === 0 ? (
+          <p className="pt-10 text-center text-sm text-neutral-500">
+            No products yet
+          </p>
+        ) : (
+          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {products.map((p) => (
+              <AdminProductCard
+                key={p._id}
+                product={p}
+                onEdit={(product) => setFormState({ product })}
+              />
+            ))}
+          </div>
+        ))}
+
+      {formState && (
+        <ProductFormModal
+          product={formState.product}
+          onClose={() => setFormState(null)}
+          onSaved={handleSaved}
+        />
       )}
     </div>
   );

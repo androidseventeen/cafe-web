@@ -1,3 +1,5 @@
+import { formatPriceUSD } from "../lib/price";
+
 export function TypeBadge({ type }) {
   const isDigital = type?.toLowerCase() === 'digital';
   const styles = isDigital
@@ -45,7 +47,7 @@ export default function ProductCard({
                 <span
                   className={`text-lg font-bold ${isOnSale ? 'text-red-600' : ''}`}
                 >
-                  ${price}
+                  {formatPriceUSD(price)}
                 </span>
                 {originalPrice && (
                   <span className="text-sm text-neutral-400 line-through">
